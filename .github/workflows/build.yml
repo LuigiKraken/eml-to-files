@@ -1,0 +1,73 @@
+name: Build
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: eml-to-files.exe
+          - os: macos-latest
+            artifact: eml-to-files
+          - os: ubuntu-latest
+            artifact: eml-to-files
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y python3-tk
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt pyinstaller
+
+      - name: Build executable
+        run: >
+          pyinstaller
+          --onefile
+          --windowed
+          --name eml-to-files
+          --collect-data customtkinter
+          main.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eml-to-files-${{ matrix.os }}
+          path: dist/${{ matrix.artifact }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Rename platform binaries
+        run: |
+          mv artifacts/eml-to-files-windows-latest/eml-to-files.exe artifacts/eml-to-files-windows.exe
+          mv artifacts/eml-to-files-macos-latest/eml-to-files   artifacts/eml-to-files-macos
+          mv artifacts/eml-to-files-ubuntu-latest/eml-to-files   artifacts/eml-to-files-linux
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/eml-to-files-windows.exe
+            artifacts/eml-to-files-macos
+            artifacts/eml-to-files-linux

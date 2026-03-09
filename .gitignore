@@ -1,0 +1,9 @@
+output/
+input/
+__pycache__/
+*.pyc
+.env
+.venv/
+build/
+dist/
+*.spec

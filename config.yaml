@@ -1,0 +1,100 @@
+# ── EML-to-Files Configuration ──────────────────────────────────────────────
+
+input_dir: "./input"
+output_dir: "./output"
+
+# ── Filtering ───────────────────────────────────────────────────────────────
+
+filters:
+  # Strip email signatures (everything after common sign-off markers like
+  # "Mit freundlichen Grüßen", "Best regards", "-- ", etc.)
+  strip_signatures: true
+
+  # Extra signature markers (case-insensitive, matched at line start).
+  # Built-in markers are always active; add domain-specific ones here.
+  extra_signature_markers:
+    - "Gesendet von meinem iPhone"
+    - "Gesendet von meinem Samsung"
+
+  # Collapse quoted reply chains so only the latest message remains.
+  # Set to false to keep the full thread history.
+  simplify_threads: true
+
+  # When simplify_threads is false, you can still de-duplicate: if the same
+  # quoted block appears in multiple messages only the first occurrence is kept.
+  deduplicate_quotes: true
+
+  # Prefer plain-text body. When true, HTML parts are only used as a
+  # fallback (converted to plain text). When false, HTML is always converted
+  # and appended if it contains content not present in the plain-text part.
+  prefer_plaintext: true
+
+  # Strip disclaimers / confidentiality notices that often appear at the
+  # bottom of corporate emails.
+  strip_disclaimers: true
+
+  # Remove inline image CID references (e.g. [cid:image001.png@...]) that
+  # are meaningless without the rendered HTML.
+  strip_cid_references: true
+
+  # Minimum body length (characters) after cleaning. Messages shorter than
+  # this are skipped (e.g. empty auto-replies).
+  min_body_length: 10
+
+# ── Attachments ─────────────────────────────────────────────────────────────
+
+attachments:
+  # Extract and save file attachments (PDFs, images, docs, etc.)
+  extract: true
+
+  # Skip attachments smaller than this (bytes). Helps ignore tiny tracking
+  # pixels and spacer GIFs.
+  min_size_bytes: 1024
+
+  # Skip inline images that are part of the email signature (logo, banner).
+  # Detected by Content-ID header containing "image0" or common patterns.
+  skip_signature_images: true
+
+  # Only keep attachments with these extensions (empty list = keep all).
+  # Example: [".pdf", ".docx", ".xlsx", ".png", ".jpg", ".jpeg", ".zip"]
+  allowed_extensions: []
+
+  # Always skip attachments with these extensions.
+  blocked_extensions: [".ics", ".vcf"]
+
+# ── Output ──────────────────────────────────────────────────────────────────
+
+output:
+  # Folder structure for output. Available placeholders:
+  #   {year}      – email year (e.g. 2024)
+  #   {month}     – email month (e.g. 06)
+  #   {day}       – email day (e.g. 10)
+  #   {date}      – YYYY-MM-DD
+  #   {subject}   – slugified subject line
+  #   {from}      – sender email address
+  #   {folder}    – original mailbox folder (Inbox, Sent Items, etc.)
+  #   {message_id}– sanitized Message-ID
+  folder_template: "{year}/{date}_{subject}"
+
+  # Maximum length for the subject slug in folder names.
+  max_subject_length: 80
+
+  # File name for the extracted text conversation.
+  text_filename: "message.txt"
+
+  # Sub-folder name for attachments within each message folder.
+  attachments_subfolder: "attachments"
+
+  # Encoding for output text files.
+  encoding: "utf-8"
+
+# ── Advanced ────────────────────────────────────────────────────────────────
+
+# Number of parallel workers for processing (0 = number of CPU cores).
+workers: 0
+
+# Log level: DEBUG, INFO, WARNING, ERROR
+log_level: "INFO"
+
+# When true, write a CSV index of all processed messages to output_dir.
+write_index: true
